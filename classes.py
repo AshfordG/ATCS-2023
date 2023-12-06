@@ -70,6 +70,10 @@ class Game:
             pygame.Rect(250, 150, 300, 20),
             pygame.Rect(70, 400, 20, 150),
             pygame.Rect(400, 350, 20, 150),
+            pygame.Rect(0, 0, 600, 15),
+            pygame.Rect(0, 0, 15, 600),
+            pygame.Rect(0, 585, 600, 14),
+            pygame.Rect(585, 0, 15, 600)
         ]
     
     def handle_events(self):
@@ -90,11 +94,18 @@ class Game:
                     self.player.pos[1] += self.player.speed
                 if keys[pygame.K_DOWN]:
                     self.player.pos[1] -= self.player.speed
-
+        
         ai_rect = pygame.Rect(self.ai.pos[0] - self.ai.radius, self.ai.pos[1] - self.ai.radius, self.ai.radius * 2, self.ai.radius * 2)
         for wall in self.walls:
             if ai_rect.colliderect(wall):
-                self.ai.pos = [random.randint(50, WIDTH - 50), random.randint(50, HEIGHT - 50)]
+                if self.ai.current_direction == 'LEFT':
+                    self.ai.pos[0] += 2 * self.ai.speed
+                if self.ai.current_direction == 'RIGHT':
+                    self.ai.pos[0] -=  2 * self.ai.speed
+                if self.ai.current_direction == 'UP':
+                    self.ai.pos[1] +=  2 * self.ai.speed
+                if self.ai.current_direction == 'DOWN':
+                    self.ai.pos[1] -= 2 *  self.ai.speed
 
     def run(self):
         running = True
