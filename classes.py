@@ -15,7 +15,7 @@ FPS = 60
 BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
 WHITE = (255, 255, 255)
-RED = (0, 255, 100)
+DOG = (189,154,130)
 
 class Player:
     def __init__(self):
@@ -35,11 +35,11 @@ class Player:
 
 class AI:
     def __init__(self):
-        self.pos = [100, 100]
+        self.pos = [500, 100]
         self.radius = 15
         self.speed = 3
         self.direction_timer = 0
-        self.change_direction_delay = 30
+        self.change_direction_delay = 40
 
     def move(self):
         if self.direction_timer <= 0:
@@ -58,6 +58,26 @@ class AI:
         elif self.current_direction == 'RIGHT' and self.pos[0] < WIDTH - self.radius:
             self.pos[0] += self.speed
 
+class FSM:
+    def __init__(self, initial_state):
+        self.state_transitions = {}
+        self.current_state = initial_state
+
+    def add_transition(self, input_symbol, state, action=None, next_state=None):
+        if next_state is None:
+            self.state_transitions[(input_symbol, state)] = (action, state)
+        else:
+            self.state_transitions[(input_symbol, state)] = (action, next_state)
+
+    def get_transition(self, input_symbol, state):
+        return self.state_transitions[(input_symbol, state)]
+
+    def process(self, input_symbol):
+        action, new_state = self.get_transition(input_symbol, self.current_state)
+        self.current_state = new_state
+        if action is not None:
+            action()
+
 class Game:
     def __init__(self):
         self.win = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -65,6 +85,13 @@ class Game:
         self.clock = pygame.time.Clock()
         self.player = Player()
         self.ai = AI()
+
+        self.player_image = pygame.image.load('pixelMan.png')
+        self.player_image = pygame.transform.scale(self.player_image, (self.player.radius * 2, self.player.radius * 2))
+        
+        self.ai_image = pygame.image.load('dogName.png')
+        self.ai_image = pygame.transform.scale(self.ai_image, (self.ai.radius * 2, self.ai.radius * 2))
+
         self.walls = [
             pygame.Rect(100, 50, 20, 200),
             pygame.Rect(250, 150, 300, 20),
@@ -75,6 +102,8 @@ class Game:
             pygame.Rect(0, 585, 600, 14),
             pygame.Rect(585, 0, 15, 600)
         ]
+        self.grass_color = (124, 252, 0)
+        self.wall_color = (169, 169, 169)
     
     def handle_events(self):
         for event in pygame.event.get():
@@ -110,7 +139,7 @@ class Game:
     def run(self):
         running = True
         while running:
-            self.win.fill(BLACK)
+            self.win.fill(self.grass_color)
 
             keys = pygame.key.get_pressed()
             running = self.handle_events()
@@ -119,10 +148,13 @@ class Game:
             self.check_collisions(keys)
 
             for wall in self.walls:
-                pygame.draw.rect(self.win, WHITE, wall)
-            
-            pygame.draw.circle(self.win, YELLOW, self.player.pos, self.player.radius)
-            pygame.draw.circle(self.win, RED, self.ai.pos, self.ai.radius)
+                pygame.draw.rect(self.win, self.wall_color, wall)
+
+            self.win.blit(self.player_image, (self.player.pos[0] - self.player.radius, self.player.pos[1] - self.player.radius))
+            self.win.blit(self.ai_image, (self.ai.pos[0] - self.ai.radius, self.ai.pos[1] - self.ai.radius))
+
+            #pygame.draw.circle(self.win, YELLOW, self.player.pos, self.player.radius)
+            #pygame.draw.circle(self.win, DOG, self.ai.pos, self.ai.radius)
             
             pygame.display.flip()
             self.clock.tick(FPS)
