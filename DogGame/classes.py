@@ -3,9 +3,6 @@ import sys
 import random
 
 
-#AI move
-
-
 # Initialize Pygame
 pygame.init()
 
@@ -39,7 +36,7 @@ class AI:
         self.radius = 15
         self.speed = 3
         self.direction_timer = 0
-        self.change_direction_delay = 40
+        self.change_direction_delay = 100
 
     def move(self):
         if self.direction_timer <= 0:
@@ -121,8 +118,6 @@ class Game:
             pygame.Rect(150, 155, 300, 20),
             pygame.Rect(330, 65, 20, 50),
 
-
-            
         ]
         self.grass_color = (124, 252, 0)
         self.wall_color = (169, 169, 169)
