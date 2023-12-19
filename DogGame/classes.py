@@ -233,7 +233,7 @@ class Game:
             self.draw_cars()
 
             car_collision = self.check_car_collision()  # Check collision with cars
-            
+
             if car_collision:
                 self.player.pos[0] = 300
                 self.player.pos[1] = 300
