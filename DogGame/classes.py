@@ -37,23 +37,67 @@ class AI:
         self.speed = 3
         self.direction_timer = 0
         self.change_direction_delay = 100
+        directions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
+        self.current_direction = random.choice(directions)
+        self.previous_y = 0
+        self.previous_x = 0
+
+        self.fsm = FSM('RIGHT')
+        self.init_fsm()
+    
+    def init_fsm(self):
+        self.fsm.add_transition('RECT_COLLISION', 'LEFT', self.collide_left, 'DOWN')
+        self.fsm.add_transition('RECT_COLLISION', 'RIGHT', self.collide_right, 'UP')
+        self.fsm.add_transition('RECT_COLLISION', 'UP', self.collide_up, 'LEFT')
+        self.fsm.add_transition('RECT_COLLISION', 'DOWN', self.collide_down, 'RIGHT')
+    
+    def get_state(self):
+        return self.fsm.current_state
+
+    def update(self):
+        # Update FSM based on collision
+        self.fsm.process('RECT_COLLISION')  # Trigger 'COLLISION' event for the FSM
+        self.previous_y = self.pos[0]
+        self.previous_x = self.pos[1]
+
+    # 2 * self.speed
+    def collide_left(self):
+        self.pos[0] += 10
+        self.current_direction = self.fsm.current_state
+
+    def collide_right(self):
+        self.pos[0] -= 10
+        self.current_direction = self.fsm.current_state
+
+    def collide_up(self):
+        self.pos[1] += 10
+        self.current_direction = self.fsm.current_state
+
+    def collide_down(self):
+        self.pos[1] -= 10
+        self.current_direction = self.fsm.current_state
 
     def move(self):
         if self.direction_timer <= 0:
+            self.direction_timer = self.change_direction_delay
             directions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
             self.current_direction = random.choice(directions)
-            self.direction_timer = self.change_direction_delay  # Reset timer
+            if self. previous_y == self.pos[0] and self.previous_x == self.pos[1]:
+                self.pos[0] = 500
+                self.pos[1] = 100
+                
         else:
             self.direction_timer -= 1
 
         if self.current_direction == 'UP' and self.pos[1] > self.radius:
             self.pos[1] -= self.speed
-        elif self.current_direction == 'DOWN' and self.pos[1] < HEIGHT - self.radius:
+        elif self.current_direction == 'DOWN' and self.pos[1] < HEIGHT - 5 - self.radius:
             self.pos[1] += self.speed
         elif self.current_direction == 'LEFT' and self.pos[0] > self.radius:
             self.pos[0] -= self.speed
-        elif self.current_direction == 'RIGHT' and self.pos[0] < WIDTH - self.radius:
+        elif self.current_direction == 'RIGHT' and self.pos[0] < WIDTH - 5 - self.radius:
             self.pos[0] += self.speed
+
 
 class FSM:
     def __init__(self, initial_state):
@@ -118,6 +162,7 @@ class Game:
             pygame.Rect(150, 155, 300, 20),
             pygame.Rect(330, 65, 20, 50),
 
+
         ]
         self.grass_color = (124, 252, 0)
         self.wall_color = (169, 169, 169)
@@ -144,14 +189,7 @@ class Game:
         ai_rect = pygame.Rect(self.ai.pos[0] - self.ai.radius, self.ai.pos[1] - self.ai.radius, self.ai.radius * 2, self.ai.radius * 2)
         for wall in self.walls:
             if ai_rect.colliderect(wall):
-                if self.ai.current_direction == 'LEFT':
-                    self.ai.pos[0] += 2 * self.ai.speed
-                if self.ai.current_direction == 'RIGHT':
-                    self.ai.pos[0] -=  2 * self.ai.speed
-                if self.ai.current_direction == 'UP':
-                    self.ai.pos[1] +=  2 * self.ai.speed
-                if self.ai.current_direction == 'DOWN':
-                    self.ai.pos[1] -= 2 *  self.ai.speed
+                self.ai.update()  # Call AI's update method upon collision with a rectangle
         
         if player_rect.colliderect(ai_rect):
             return True
