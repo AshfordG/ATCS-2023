@@ -20,6 +20,7 @@ class Player:
         self.radius = 15
         self.speed = 2
 
+    #Player movement using arrow keys
     def move(self, keys):
         if keys[pygame.K_LEFT] and self.pos[0] > self.radius:
             self.pos[0] -= self.speed
@@ -41,8 +42,7 @@ class AI:
         self.current_direction = random.choice(directions)
         self.previous_y = 0
         self.previous_x = 0
-
-        self.fsm = FSM('RIGHT')
+        self.fsm = FSM('RIGHT') #Initialize FSM for AI
         self.init_fsm()
     
     def init_fsm(self):
@@ -55,12 +55,11 @@ class AI:
         return self.fsm.current_state
 
     def update(self):
-        # Update FSM based on collision
-        self.fsm.process('RECT_COLLISION')  # Trigger 'COLLISION' event for the FSM
+        # Update FSM based on collision, input is always colliding with rectangle, uses current direction state to determine which new direction state and action
+        self.fsm.process('RECT_COLLISION')
         self.previous_y = self.pos[0]
         self.previous_x = self.pos[1]
 
-    # 2 * self.speed
     def collide_left(self):
         self.pos[0] += 10
         self.current_direction = self.fsm.current_state
@@ -77,6 +76,7 @@ class AI:
         self.pos[1] -= 10
         self.current_direction = self.fsm.current_state
 
+    #AI random movement, after some time chooses new direction, if AI postion is same as before (stuck in wall) reset it to start position
     def move(self):
         if self.direction_timer <= 0:
             self.direction_timer = self.change_direction_delay
@@ -84,8 +84,7 @@ class AI:
             self.current_direction = random.choice(directions)
             if self. previous_y == self.pos[0] and self.previous_x == self.pos[1]:
                 self.pos[0] = 500
-                self.pos[1] = 100
-                
+                self.pos[1] = 100    
         else:
             self.direction_timer -= 1
 
@@ -98,7 +97,7 @@ class AI:
         elif self.current_direction == 'RIGHT' and self.pos[0] < WIDTH - 5 - self.radius:
             self.pos[0] += self.speed
 
-
+#FSM class
 class FSM:
     def __init__(self, initial_state):
         self.state_transitions = {}
@@ -126,20 +125,16 @@ class Game:
         self.clock = pygame.time.Clock()
         self.player = Player()
         self.ai = AI()
-        # self.fsm = FSM(self.medium)
 
+        #Paste images onto ai and player objects
         self.player_image = pygame.image.load('pixelMan.png')
         self.player_image = pygame.transform.scale(self.player_image, (self.player.radius * 2, self.player.radius * 2))
-        # self.scale_factor = 1.25
-        # self.player_image = pygame.transform.scale(self.player_image, (self.player.radius * 2 * self.scale_factor, self.player.radius * 2 * self.scale_factor))
-        
         self.ai_image = pygame.image.load('dogName.png')
         self.ai_image = pygame.transform.scale(self.ai_image, (self.ai.radius * 2, self.ai.radius * 2))
 
-        self.car_speed = 3  # Adjust the speed of the cars as needed
-        self.cars = []  # List to store car positions
-
-        # Add initial positions of cars
+        #Obstacle Movement
+        self.car_speed = 3
+        self.cars = [] 
         for i in range(100, 600, 150,):
             self.cars.append(pygame.Rect(i, i - 20, 30, 30))
 
@@ -173,7 +168,9 @@ class Game:
                 return False
         return True
     
+    #Check collision for player and AI
     def check_collisions(self, keys):
+        #1 - Check if player has collided with walls
         player_rect = pygame.Rect(self.player.pos[0] - self.player.radius, self.player.pos[1] - self.player.radius, self.player.radius * 2, self.player.radius * 2)
         for wall in self.walls:
             if player_rect.colliderect(wall):
@@ -185,15 +182,17 @@ class Game:
                     self.player.pos[1] += self.player.speed
                 if keys[pygame.K_DOWN]:
                     self.player.pos[1] -= self.player.speed
-        
+        #2 Check if AI has collided with walls, if yes then call update to process FSM
         ai_rect = pygame.Rect(self.ai.pos[0] - self.ai.radius, self.ai.pos[1] - self.ai.radius, self.ai.radius * 2, self.ai.radius * 2)
         for wall in self.walls:
             if ai_rect.colliderect(wall):
                 self.ai.update()  # Call AI's update method upon collision with a rectangle
         
+        #IF player collides with AI then set true to end game
         if player_rect.colliderect(ai_rect):
             return True
 
+    #Car movement
     def move_cars(self):
         for car in self.cars:
             car.x += self.car_speed
@@ -234,12 +233,10 @@ class Game:
             self.draw_cars()
 
             car_collision = self.check_car_collision()  # Check collision with cars
-
+            
             if car_collision:
                 self.player.pos[0] = 300
                 self.player.pos[1] = 300
-                # running = False
-                # self.end_game()
 
             for wall in self.walls:
                 pygame.draw.rect(self.win, self.wall_color, wall)
